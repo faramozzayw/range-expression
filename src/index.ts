@@ -21,6 +21,9 @@ export class RangeExpr {
 		this.inclusive = inclusive;
 	}
 
+	public getStart = () => this.start;
+	public getEnd = () => this.end;
+
 	public getBounds(): [start: number, end: number] {
 		return [this.start, this.end];
 	}
@@ -101,14 +104,6 @@ export class RangeToExpr extends RangeExpr {
 	[Symbol.iterator]: null = null;
 }
 
-export class RangeFullExpr extends RangeExpr {
-	constructor() {
-		super(-Infinity, Infinity);
-	}
-
-	[Symbol.iterator]: null = null;
-}
-
 export class RangeInclusiveExpr extends RangeExpr {
 	constructor(start: number, end: number) {
 		super(start, end, true);
@@ -118,6 +113,14 @@ export class RangeInclusiveExpr extends RangeExpr {
 export class RangeToInclusiveExpr extends RangeExpr {
 	constructor(end: number) {
 		super(-Infinity, end, true);
+	}
+
+	[Symbol.iterator]: null = null;
+}
+
+export class RangeFullExpr extends RangeExpr {
+	constructor() {
+		super(-Infinity, Infinity);
 	}
 
 	[Symbol.iterator]: null = null;

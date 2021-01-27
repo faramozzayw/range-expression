@@ -133,4 +133,15 @@ describe("ranges", () => {
 		expect(new RangeInclusiveExpr(3, 5).contains(5)).toBeTruthy();
 		expect(new RangeInclusiveExpr(3, 5).contains(5)).toBeTruthy();
 	});
+
+	it("`clone` works correctly", () => {
+		const range = new RangeExpr(2, 5);
+		const clone = range.clone();
+
+		expect(range.isEmpty()).toBeFalsy();
+		// @ts-ignore
+		range.start = 5;
+		expect(range.isEmpty()).toBeTruthy();
+		expect(clone.isEmpty()).toBeFalsy();
+	});
 });
