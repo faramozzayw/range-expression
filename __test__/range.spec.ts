@@ -120,8 +120,17 @@ describe("ranges", () => {
 		expect(new RangeInclusiveExpr(5, 4).isEmpty()).toBeTruthy();
 	});
 
-	it("toString", () => {
+	it("`toString` works correctly", () => {
 		expect(new RangeExpr(1, 2).toString()).toEqual("1..2");
 		expect(new RangeExpr(1, 2, true).toString()).toEqual("1..=2");
+	});
+
+	it("`contains` works correctly", () => {
+		expect(new RangeExpr(3, 5).contains(2)).toBeFalsy();
+		expect(new RangeExpr(3, 5).contains(3)).toBeTruthy();
+		expect(new RangeExpr(3, 5).contains(5)).toBeFalsy();
+
+		expect(new RangeInclusiveExpr(3, 5).contains(5)).toBeTruthy();
+		expect(new RangeInclusiveExpr(3, 5).contains(5)).toBeTruthy();
 	});
 });

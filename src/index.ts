@@ -4,8 +4,6 @@
  * The range `start..end` contains all values with `start <= x < end`. It is empty if `start >= end`.
  */
 export class RangeExpr {
-	public static exhaustive: boolean = false;
-
 	private start: number;
 	private end: number;
 	private inclusive: boolean;
@@ -16,8 +14,10 @@ export class RangeExpr {
 	 * @param inclusive
 	 */
 	constructor(start: number, end: number, inclusive: boolean = false) {
-		this.start = start;
-		this.end = inclusive ? end + 1 : end;
+		const _end = Math.round(end);
+
+		this.start = Math.round(start);
+		this.end = inclusive ? _end + 1 : _end;
 		this.inclusive = inclusive;
 	}
 
@@ -27,11 +27,18 @@ export class RangeExpr {
 
 	/**
 	 * Returns `true` if `item` is contained in the range.
-	 *
-	 * @todo
 	 */
 	public contains(item: number): boolean {
-		return false;
+		if (!Number.isSafeInteger(item)) {
+			console.warn("Incorrect value");
+			return false;
+		}
+
+		if (this.inclusive) {
+			return this.start <= item && item <= this.end;
+		} else {
+			return this.start <= item && item < this.end;
+		}
 	}
 
 	/**
