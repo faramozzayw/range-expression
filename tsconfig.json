@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "es5",
+    "target": "es5",
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "types": [
+      "jest",
+      "node"
+    ],
+    "rootDir": "src",
+    "moduleResolution": "node",
+    "downlevelIteration": true
+  }
+}
