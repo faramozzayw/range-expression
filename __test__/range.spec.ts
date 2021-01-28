@@ -7,7 +7,7 @@ import {
 	RangeToInclusiveExpr,
 } from "../src/index";
 
-const array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const array: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const str = "get correct slice";
 
 describe("ranges", () => {
@@ -123,6 +123,35 @@ describe("ranges", () => {
 	it("`toString` works correctly", () => {
 		expect(new RangeExpr(1, 2).toString()).toEqual("1..2");
 		expect(new RangeExpr(1, 2, true).toString()).toEqual("1..=2");
+
+		expect(new RangeFromExpr(5).toString()).toEqual("5..");
+		expect(new RangeToExpr(5).toString()).toEqual("..5");
+		expect(new RangeToInclusiveExpr(5).toString()).toEqual("..=5");
+		expect(new RangeFullExpr().toString()).toEqual("..");
+	});
+
+	it("`fromStringtoString` works correctly", () => {
+		expect(RangeExpr.fromString("1..2")).toEqual(new RangeExpr(1, 2));
+		expect(RangeExpr.fromString("10..200")).toEqual(new RangeExpr(10, 200));
+		expect(RangeExpr.fromString("1..20")).toEqual(new RangeExpr(1, 20));
+		expect(RangeExpr.fromString("1..=2")).toEqual(new RangeExpr(1, 2, true));
+
+		expect(RangeExpr.fromString("5..").toString()).toEqual(
+			new RangeFromExpr(5).toString(),
+		);
+		expect(RangeExpr.fromString("..5").toString()).toEqual(
+			new RangeToExpr(5).toString(),
+		);
+
+		expect(RangeExpr.fromString("5..").toString()).toEqual(
+			new RangeFromExpr(5).toString(),
+		);
+		expect(RangeExpr.fromString("..=5").toString()).toEqual(
+			new RangeToInclusiveExpr(5).toString(),
+		);
+		expect(RangeExpr.fromString("..").toString()).toEqual(
+			new RangeFullExpr().toString(),
+		);
 	});
 
 	it("`contains` works correctly", () => {
@@ -139,9 +168,16 @@ describe("ranges", () => {
 		const clone = range.clone();
 
 		expect(range.isEmpty()).toBeFalsy();
-		// @ts-ignore
-		range.start = 5;
-		expect(range.isEmpty()).toBeTruthy();
 		expect(clone.isEmpty()).toBeFalsy();
+	});
+
+	it("`isExhaustive` works correctly", () => {
+		expect(new RangeExpr(-Infinity, 4).isExhaustive()).toBeFalsy();
+		expect(new RangeExpr(-5, Infinity).isExhaustive()).toBeFalsy();
+		expect(new RangeToInclusiveExpr(5).isExhaustive()).toBeFalsy();
+		expect(new RangeFullExpr().isExhaustive()).toBeFalsy();
+
+		expect(new RangeExpr(0, 4).isExhaustive()).toBeTruthy();
+		expect(new RangeInclusiveExpr(1, 5).isExhaustive()).toBeTruthy();
 	});
 });
