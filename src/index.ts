@@ -1,12 +1,29 @@
 /** @hidden */
-const isEmptyString = (str: string) => str.trim() === "";
+function bindIter($Range: RangeBase) {
+	return function* (): Generator<number, void, number> {
+		const [start, end] = $Range.getBounds();
+
+		for (let i = start; i < end; i++) {
+			yield i;
+		}
+	};
+}
+
+export interface Clone<T> {
+	/**
+	 * The `T::clone()` method returns a RangeBase object with boundary points identical to the cloned RangeBase.
+	 *
+	 * The returned clone is copied by **value, not reference,** so a change in either RangeBase does not affect the other.
+	 */
+	clone: () => T;
+}
 
 /**
- * @class RangeExpr
+ * @class RangeBase
  *
  * The range `start..end` contains all values with `start <= x < end`. It is empty if `start >= end`.
  */
-export class RangeExpr {
+class RangeBase {
 	#start: number;
 	#end: number;
 	#inclusive: boolean;
@@ -16,21 +33,29 @@ export class RangeExpr {
 	 * @param end The upper bound of the range (inclusive, if the param `inclusive` is `true`, otherwise - exclusive).
 	 * @param inclusive Determines whether the end will be included in the range, default to `false`
 	 *
-	 * @throws Will throw RangeError if one of the bounds is NaN.
+	 * @throws Will throw `RangeError` if one of the bounds is NaN.
 	 */
 	constructor(start: number, end: number, inclusive: boolean = false) {
 		if (Number.isNaN(start) || Number.isNaN(end)) {
 			throw new RangeError(`"NaN" does not include in range of correct values`);
 		}
 
-		const _end = Math.round(end);
-
 		this.#start = Math.round(start);
-		this.#end = inclusive ? _end + 1 : _end;
+		this.#end = Math.round(inclusive ? end + 1 : end);
 		this.#inclusive = inclusive;
 	}
 
-	static fromString(rangeString: string): RangeExpr {
+	get start() {
+		return this.#start;
+	}
+
+	get end() {
+		return this.#inclusive ? this.#end - 1 : this.#end;
+	}
+
+	/**
+	 * @todo
+	static fromString (rangeString: string, $Range = this): unknown {
 		const regExp = /(\d+)?\.\.(=?)(\d+)?/;
 		const [_, rawStart, rawInclusive, rawEnd] = rangeString
 			.match(regExp)
@@ -41,16 +66,8 @@ export class RangeExpr {
 
 		const inclusive = rawInclusive === "=";
 
-		return new RangeExpr(start, end, inclusive);
-	}
-
-	get start() {
-		return this.#start;
-	}
-
-	get end() {
-		return this.#end;
-	}
+		return new $Range(start, end, inclusive);
+	};*/
 
 	/**
 	 * Returns the bounds of a Range
@@ -62,13 +79,15 @@ export class RangeExpr {
 	/**
 	 * Returns `true` if the `Range` includes the end.
 	 */
-	isInclusive = (): boolean => this.#inclusive;
+	isInclusive(): boolean {
+		return this.#inclusive;
+	}
 
-	#startIsExhaustive = () => Number.isFinite(this.#start);
-	#endIsExhaustive = () => Number.isFinite(this.#end);
-
+	/**
+	 * Returns `true` if the `Range` is exhaustive.
+	 */
 	isExhaustive(): boolean {
-		if (this.#endIsExhaustive() && this.#startIsExhaustive()) {
+		if (Number.isFinite(this.#start) && Number.isFinite(this.#end)) {
 			return true;
 		}
 
@@ -79,11 +98,12 @@ export class RangeExpr {
 	 * Returns `true` if `item` is contained in the range.
 	 *
 	 * @param item The searched value
+	 *
+	 * @throws Will throw `RangeError` if one of the bounds is NaN.
 	 */
-	contains(item: number): boolean {
+	contains(item: number): boolean | never {
 		if (Number.isNaN(item)) {
-			console.warn("Incorrect value");
-			return false;
+			throw new RangeError(`"NaN" does not include in range of correct values`);
 		}
 
 		if (this.#inclusive) {
@@ -99,82 +119,136 @@ export class RangeExpr {
 	isEmpty(): boolean {
 		return !(this.#start < this.#end);
 	}
+}
 
+export class RangeExpr extends RangeBase implements Clone<RangeExpr> {
 	/**
-	 * The RangeExpr.clone() method returns a RangeExpr object with boundary points identical to the cloned RangeExpr.
+	 * @param start The lower bound of the range (inclusive).
+	 * @param end The upper bound of the range (exclusive).
 	 *
-	 * The returned clone is copied by **value, not reference,** so a change in either RangeExpr does not affect the other.
+	 * @throws Will throw `RangeError` if one of the bounds is `NaN` or `+-Infinity`.
 	 */
-	clone(): RangeExpr {
-		return new RangeExpr(this.#start, this.#end);
-	}
+	constructor(start: number, end: number) {
+		super(start, end);
 
-	*[Symbol.iterator]() {
-		const { start, end } = this;
-
-		for (let i = start; i < end; i++) {
-			yield i;
+		if (!Number.isFinite(start) || !Number.isFinite(end)) {
+			throw new RangeError(
+				`"+-Infinity" does not include in range of correct values`,
+			);
 		}
 	}
 
-	get [Symbol.toStringTag]() {
-		return "RangeExpr";
-	}
-
-	/**
-	 * @override
-	 */
 	toString() {
-		const start =
-			this.#startIsExhaustive() && Number.isFinite(this.#start)
-				? this.#start
-				: "";
-		const end =
-			this.#endIsExhaustive() && Number.isFinite(this.#end)
-				? this.#inclusive
-					? this.#end - 1
-					: this.#end
-				: "";
-		const inclusive = this.#inclusive ? "=" : "";
-
-		return `${start}..${inclusive}${end}`;
+		return `${this.start}..${this.end}`;
 	}
+
+	clone() {
+		return new RangeExpr(this.start, this.end);
+	}
+
+	[Symbol.iterator] = bindIter(this);
 }
 
-export class RangeFromExpr extends RangeExpr {
+export class RangeFromExpr extends RangeBase implements Clone<RangeFromExpr> {
+	/**
+	 * @param start The lower bound of the range (inclusive).
+	 *
+	 * @throws Will throw `RangeError` if one of the bounds is `NaN`.
+	 */
 	constructor(start: number) {
 		super(start, Infinity);
 	}
 
-	[Symbol.iterator]: null = null;
+	toString() {
+		return `${this.start}..`;
+	}
+
+	clone() {
+		return new RangeFromExpr(this.start);
+	}
 }
 
-export class RangeToExpr extends RangeExpr {
+export class RangeToExpr extends RangeBase implements Clone<RangeToExpr> {
+	/**
+	 * @param start The lower bound of the range (inclusive).
+	 * @param end The upper bound of the range (exclusive).
+	 *
+	 * @throws Will throw `RangeError` if one of the bounds is `NaN`.
+	 */
 	constructor(end: number) {
 		super(-Infinity, end);
 	}
 
-	[Symbol.iterator]: null = null;
-}
+	toString() {
+		return `..${this.end}`;
+	}
 
-export class RangeInclusiveExpr extends RangeExpr {
-	constructor(start: number, end: number) {
-		super(start, end, true);
+	clone() {
+		return new RangeToExpr(this.end);
 	}
 }
 
-export class RangeToInclusiveExpr extends RangeExpr {
+export class RangeInclusiveExpr
+	extends RangeBase
+	implements Clone<RangeInclusiveExpr> {
+	/**
+	 * @param start The lower bound of the range (inclusive).
+	 * @param end The upper bound of the range (inclusive).
+	 *
+	 * @throws Will throw `RangeError` if one of the bounds is `NaN` or `+-Infinity`.
+	 */
+	constructor(start: number, end: number) {
+		super(start, end, true);
+
+		if (!Number.isFinite(start) || !Number.isFinite(end)) {
+			throw new RangeError(
+				`"+-Infinity" does not include in range of correct values`,
+			);
+		}
+	}
+
+	toString() {
+		return `${this.start}..=${this.end}`;
+	}
+
+	clone() {
+		return new RangeInclusiveExpr(this.start, this.end);
+	}
+
+	[Symbol.iterator] = bindIter(this);
+}
+
+export class RangeToInclusiveExpr
+	extends RangeBase
+	implements Clone<RangeToInclusiveExpr> {
+	/**
+	 * @param end The upper bound of the range (inclusive).
+	 *
+	 * @throws Will throw `RangeError` if one of the bounds is `NaN`.
+	 */
 	constructor(end: number) {
 		super(-Infinity, end, true);
 	}
 
-	[Symbol.iterator]: null = null;
+	toString() {
+		return `..=${this.end}`;
+	}
+
+	clone() {
+		return new RangeToInclusiveExpr(this.end);
+	}
 }
 
-export class RangeFullExpr extends RangeExpr {
+export class RangeFullExpr extends RangeBase implements Clone<RangeFullExpr> {
 	constructor() {
 		super(-Infinity, Infinity);
 	}
 
-	[Symbol.iterator]: null = null;
+	toString() {
+		return `..`;
+	}
+
+	clone() {
+		return new RangeFullExpr();
+	}
 }
