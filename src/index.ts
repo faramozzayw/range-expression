@@ -121,6 +121,13 @@ class RangeBase {
 	}
 }
 
+/**
+ * @class RangeExpr
+ *
+ * A (half-open) range bounded inclusively below and exclusively above (`start..end`).
+ *
+ * The range `start..end` contains all values with `start <= x < end`. It is empty if `start >= end`.
+ */
 export class RangeExpr extends RangeBase implements Clone<RangeExpr> {
 	/**
 	 * @param start The lower bound of the range (inclusive).
@@ -149,6 +156,13 @@ export class RangeExpr extends RangeBase implements Clone<RangeExpr> {
 	[Symbol.iterator] = bindIter(this);
 }
 
+/**
+ * @class RangeFromExpr
+ *
+ * A range only bounded inclusively below (`start..`).
+ *
+ * The `RangeFromExpr` `start..` contains all values with `x >= start`.
+ */
 export class RangeFromExpr extends RangeBase implements Clone<RangeFromExpr> {
 	/**
 	 * @param start The lower bound of the range (inclusive).
@@ -168,6 +182,11 @@ export class RangeFromExpr extends RangeBase implements Clone<RangeFromExpr> {
 	}
 }
 
+/**
+ * A range only bounded exclusively above (`..end`).
+ *
+ * The `RangeToExpr` `..end` contains all values with `x < end`. It cannot serve as an Iterator because it doesn't have a starting point.
+ */
 export class RangeToExpr extends RangeBase implements Clone<RangeToExpr> {
 	/**
 	 * @param start The lower bound of the range (inclusive).
@@ -188,6 +207,13 @@ export class RangeToExpr extends RangeBase implements Clone<RangeToExpr> {
 	}
 }
 
+/**
+ * @class
+ *
+ * A range bounded inclusively below and above (`start..=end`).
+ *
+ * The `RangeInclusiveExpr` `start..=end` contains all values with `x >= start` and `x <= end`. It is empty unless `start <= end`.
+ */
 export class RangeInclusiveExpr
 	extends RangeBase
 	implements Clone<RangeInclusiveExpr> {
@@ -218,6 +244,13 @@ export class RangeInclusiveExpr
 	[Symbol.iterator] = bindIter(this);
 }
 
+/**
+ * @class
+ *
+ * A range only bounded inclusively above (..=end).
+ *
+ * The `RangeToInclusiveExpr` `..=end` contains all values with `x <= end`. It cannot serve as an Iterator because it doesn't have a starting point.
+ */
 export class RangeToInclusiveExpr
 	extends RangeBase
 	implements Clone<RangeToInclusiveExpr> {
@@ -239,6 +272,13 @@ export class RangeToInclusiveExpr
 	}
 }
 
+/**
+ * @class RangeFullExpr
+ *
+ * An unbounded range (`..`).
+ *
+ * `RangeFullExpr` is primarily used as a slicing index, its shorthand is `..`. It cannot serve as an Iterator because it doesn't have a starting point.
+ */
 export class RangeFullExpr extends RangeBase implements Clone<RangeFullExpr> {
 	constructor() {
 		super(-Infinity, Infinity);
